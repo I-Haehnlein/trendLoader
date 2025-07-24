@@ -72,7 +72,7 @@ class App():
     def plot_selected_file(self):
         self.plotter = Plotter(basename(self.fSelect.filename.rstrip('.csv')),self.unifiedHover.get())
         sysData = read_csv(self.fSelect.filename, delimiter=';')
-        self.plotter.plotData(sysData)
+        self.plotter.plotData_siemensTrendExport(sysData)
         self.plotter.fig.show()
         self.btnSaveInteractive.configure(state='noraml')
         self.btnSavePng.configure(state='noraml')

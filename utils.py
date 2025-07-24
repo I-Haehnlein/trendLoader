@@ -111,8 +111,8 @@ class Plotter():
         )
         pass
 
-    def plotData(self, data:DataFrame):
-        dataKeys = self.sortKeys(data.columns.to_list())
+    def plotData_siemensTrendExport(self, data:DataFrame):
+        dataKeys = self.sortKeys_siemensTrendExport(data.columns.to_list())
         colorIteration = 0
         lineIteration = 0
         for tag in self.config:
@@ -150,7 +150,7 @@ class Plotter():
             )
             colorIteration += 1
 
-    def sortKeys(self, columns:list[str]):
+    def sortKeys_siemensTrendExport(self, columns:list[str]):
         allkeys = []
         pprint(columns)
         for key in columns:
