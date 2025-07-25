@@ -5,7 +5,7 @@ a = Analysis(
     ['trendLoader.py'],
     pathex=[],
     binaries=[],
-    datas=[('GP_Plasma_StackedOrg.ico', '..\')],
+    datas=[('GP_Plasma_StackedOrg.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

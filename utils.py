@@ -15,6 +15,7 @@ class FileSelection():
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
             case '.png': filetypes = [('Portable Network Graphic', '*.png')]
+            case _: filetypes = [('All', '*')]
 
         filename = filedialog.askopenfilename(
             title = 'Select trend export file',
@@ -30,6 +31,8 @@ class FileSelection():
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
             case '.png': filetypes = [('Portable Network Graphic', '*.png')]
+            case _: filetypes = [('All', '*')]
+
         filename = filedialog.asksaveasfilename(defaultextension=fType, filetypes=filetypes, initialfile=defaultFile)
         self.filename = filename
         return filename
@@ -121,6 +124,8 @@ class Plotter():
                 rowSet = 2
                 colSet = 1
                 log_y = False
+            else:
+                break
 
             color = self.colorMap[colorIteration%len(self.colorMap)]
             if colorIteration%len(self.colorMap) == len(self.colorMap):

@@ -1,7 +1,7 @@
 from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox
 from tkinter import LEFT, Text, BOTH, BooleanVar
 from utils import FileSelection, Plotter
-from os.path import basename, dirname
+from os.path import basename, dirname, exists
 from pandas import read_csv
 
 class App():
@@ -20,7 +20,11 @@ class App():
 
     def __init__(self) -> None:
         try:
-            self.app.iconbitmap('GP_Plasma_StackedOrg.ico')
+            icon = 'GP_Plasma_StackedOrg.ico'
+            if exists(icon):
+                self.app.iconbitmap('GP_Plasma_StackedOrg.ico')
+            else:
+                self.app.iconbitmap('_internal\\'+icon)
         except Exception as e:
             print(e)
         self.app.title('Siemens Trend Export Plotter')
