@@ -2,11 +2,11 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "GP Plasma Trend Plotter"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "GP Plasma"
 #define MyAppPubURL "gpplasma.com"
 #define MyAppIcon "GP_Plasma_StackedOrg.ico"
-#define ProjectPath "C:\Users\IanHaehnlein\00_projects\siemens_trend_export_plotting"
+#define ProjectPath "C:\Users\ihaeh\GP\00_projects\trendLoader"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
