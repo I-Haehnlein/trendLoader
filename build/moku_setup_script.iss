@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "GP Plasma Trend Plotter"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "GP Plasma"
 #define MyAppPubURL "gpplasma.com"
 #define MyAppIcon "GP_Plasma_StackedOrg.ico"
