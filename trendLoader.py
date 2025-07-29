@@ -1,5 +1,5 @@
 from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox
-from tkinter import LEFT, Text, BOTH, BooleanVar
+from tkinter import LEFT, IntVar, Text, BOTH, BooleanVar
 from utils import FileSelection, Plotter
 from os.path import basename, dirname, exists
 from pandas import read_csv
@@ -9,9 +9,11 @@ class App():
     fSelect = FileSelection()
     runName = ''
     unifiedHover:BooleanVar = BooleanVar(app,True,"unifiedHoverState")
+    dataType:IntVar = IntVar(app,value = 2)
 
     frameSelectedFile = CTkFrame(app)
     frameSelectedDir = CTkFrame(app)
+    frameDataType = CTkFrame(app)
     tbSelectedFile = CTkTextbox(frameSelectedFile, width = 200, height = 25)
     tbSelectedDir = CTkTextbox(frameSelectedDir, width = 200, height = 25)
     lbSelectedFile = CTkLabel(frameSelectedFile,text='Selected File:', width = 70, height=25)
@@ -40,10 +42,14 @@ class App():
         self.btnSaveInteractive = CTkButton(self.frameSave, text = 'Save Interactive', state = 'disabled', command = self.saveInteractive)
         self.btnSavePng = CTkButton(self.frameSave, text = 'Save PNG', state = 'disabled', command = self.savePng)
         self.cbSelectHoverMode = CTkCheckBox(self.app, text = "Unified Marker Display", variable=self.unifiedHover)
+        self.rbtnSiemensExport = CTkRadioButton(self.frameDataType, text="Siemens Trend Export", variable=self.dataType, value=1)
+        self.rbtnAutoExport = CTkRadioButton(self.frameDataType, text="Auto Export", variable=self.dataType, value=2)
 
         padX = 5
         padY = 5
         anchor = 'center'
+
+        self.frameDataType.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
         self.open_button.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
         self.frameSelectedDir.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
         self.frameSelectedFile.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
@@ -52,6 +58,8 @@ class App():
         self.tbSelectedFile.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
         self.tbSelectedDir.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
 
+        self.rbtnAutoExport.pack(side=LEFT)
+        self.rbtnSiemensExport.pack(side=LEFT)
         self.cbSelectHoverMode.pack(anchor=anchor)
         self.btnPlotFile.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
         self.frameSave.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
@@ -76,7 +84,15 @@ class App():
     def plot_selected_file(self):
         self.plotter = Plotter(basename(self.fSelect.filename.rstrip('.csv')),self.unifiedHover.get())
         sysData = read_csv(self.fSelect.filename, delimiter=';')
-        self.plotter.plotData_siemensTrendExport(sysData)
+        print(self.dataType)
+        match self.dataType.get():
+            case 1: 
+                sysData = read_csv(self.fSelect.filename, delimiter=';')
+                self.plotter.plotData_siemensTrendExport(sysData)
+            case 2: 
+                sysData = read_csv(self.fSelect.filename, delimiter=',')
+                self.plotter.plotData_autoExported(sysData)
+            case _: pass
         self.plotter.fig.show()
         self.btnSaveInteractive.configure(state='noraml')
         self.btnSavePng.configure(state='noraml')
