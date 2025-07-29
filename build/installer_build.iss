@@ -6,7 +6,7 @@
 #define MyAppPublisher "GP Plasma"
 #define MyAppPubURL "gpplasma.com"
 #define MyAppIcon "GP_Plasma_StackedOrg.ico"
-#define ProjectPath "C:\Users\IanHaehnlein\00_projects\siemens_trend_export_plotting"
+#define ProjectPath ""
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
