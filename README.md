@@ -17,7 +17,7 @@ Download the latest [release](https://github.com/I-Haehnlein/trendLoader/release
     - Save PNG will save a static image. Amodified static image can also be saved on the interactive plot after visible lines or zoom have been adjusted.
 
 ### With Unified Marker Option
-![Unified Marker Example](images/withoutUnified.png)
+![Unified Marker Example](images/withUnified.png)
 
 ### Without Unified Marker Option
 ![Without Unified Marker Example](images/withoutUnified.png)
