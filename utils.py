@@ -5,7 +5,7 @@ from plotly.graph_objects import Figure, Scatter, Table
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.io as pio
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp, to_datetime
 
 class FileSelection():
     filename:str = ''
@@ -15,7 +15,7 @@ class FileSelection():
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
             case '.png': filetypes = [('Portable Network Graphic', '*.png')]
-            case _: filetypes = [('All', '*')]
+            case _: filetypes = [('All Files', '*')]
 
         filename = filedialog.askopenfilename(
             title = 'Select trend export file',
@@ -31,13 +31,30 @@ class FileSelection():
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
             case '.png': filetypes = [('Portable Network Graphic', '*.png')]
-            case _: filetypes = [('All', '*')]
+            case _: filetypes = [('All Files', '*')]
 
         filename = filedialog.asksaveasfilename(defaultextension=fType, filetypes=filetypes, initialfile=defaultFile)
         self.filename = filename
         return filename
 
-        
+def lineTypeByInt(i:int) -> str:
+    match i:
+        case 0: dash = 'solid'
+        case 1: dash = 'dash'
+        case 2: dash = 'dashdot'
+        case 3: dash = 'longdash'
+        case 4: dash = 'longdashdot'
+        case _: dash = 'dot'
+    return dash
+
+def convertTimestamp(df:DataFrame):
+    tSeries = df['Timestamp']
+    tSeries = tSeries.apply(lambda t: Timestamp(microsecond=t))
+    df['Timestamp'] = tSeries
+    return df
+
+class AutoExportData():
+    tagsReduced:list[str] = []
     
 class Plotter():
     fig:Figure
@@ -45,6 +62,8 @@ class Plotter():
     pressuresList: list[str] = []
     processTrends: list[str] = []
     config:dict = {}
+
+    autoExportData:AutoExportData = AutoExportData()
 
     def __init__(self,runName:str, withHoverUnified:bool = True) -> None:
         h_space = 0.05
@@ -86,7 +105,7 @@ class Plotter():
             hovermode = hovermode
         )
 
-    def addPlotTrace(self, data:DataFrame, dataKey:str, lineColor:str, lineDash:str='solid', row:int=1, col:int=1, secondary_y:bool=False,log_y:bool=False):
+    def addPlotTrace(self, data:DataFrame, dataKey:str, lineColor:str, lineDash:str='solid', row:int=1, col:int=1, secondary_y:bool=False,log_y:bool=False, dataType:int =1):
         if secondary_y:
             label = dataKey + ' (right)'
         else:
@@ -96,14 +115,26 @@ class Plotter():
             htemp = "%{y:0.3e}"
         else:
             htemp = "%{y:0.2f}"
+        ## ---- Need dataType dependent plotting because the dataFrame needs to be filtered depending on the type
+        match dataType:
+            case 1:
+                x = data[self.config[dataKey]['x']]
+                y = data[self.config[dataKey]['y']]
+            case 2:
+                x = data['Timestamp']
+                y = data['Value']
+            case _: raise(Exception('Invalid dataType input (1 or 2)'))
+
         self.fig.add_trace(
             Scatter(
-                x = data[self.config[dataKey]['x']],
-                y = data[self.config[dataKey]['y']],
+                # x = data[self.config[dataKey]['x']],
+                # y = data[self.config[dataKey]['y']],
+                x = x,
+                y = y,
                 line_color = lineColor,
                 line_dash = lineDash,
                 name = f'{label}',
-                hovertemplate=htemp
+                hovertemplate = htemp
             ),
             row = row,
             col = col,
@@ -111,8 +142,8 @@ class Plotter():
         )
         pass
 
-    def plotData(self, data:DataFrame):
-        dataKeys = self.sortKeys(data.columns.to_list())
+    def plotData_siemensTrendExport(self, data:DataFrame):
+        dataKeys = self.sortKeys_siemensTrendExport(data.columns.to_list())
         colorIteration = 0
         lineIteration = 0
         for tag in self.config:
@@ -131,13 +162,7 @@ class Plotter():
             if colorIteration%len(self.colorMap) == len(self.colorMap):
                 lineIteration += 1
             
-            match lineIteration:
-                case 0: dash = 'solid'
-                case 1: dash = 'dash'
-                case 2: dash = 'dashdot'
-                case 3: dash = 'longdash'
-                case 4: dash = 'longdashdot'
-                case _: dash = 'dot'
+            dash = lineTypeByInt(lineIteration)
 
             self.addPlotTrace(
                 data = data,
@@ -150,7 +175,7 @@ class Plotter():
             )
             colorIteration += 1
 
-    def sortKeys(self, columns:list[str]):
+    def sortKeys_siemensTrendExport(self, columns:list[str]):
         allkeys = []
         pprint(columns)
         for key in columns:
@@ -172,3 +197,63 @@ class Plotter():
         print(allkeys)
         pprint(self.config)
         return allkeys
+    
+    def plotData_autoExported(self, data:DataFrame):
+        print(data)
+        self.sortKeys_autoExported(data['Name'].drop_duplicates().values.tolist())
+        # data = convertTimestamp(data)
+        data['Timestamp'] = to_datetime(data['Timestamp'], unit='ms')
+        print(data)
+        colorIteration = 0
+        lineIteration = 0
+        for tag in self.config:
+            tagConfig = self.config[tag]
+            color = self.colorMap[colorIteration%len(self.colorMap)]
+            if colorIteration%len(self.colorMap) == len(self.colorMap):
+                lineIteration += 1
+            
+            dash = lineTypeByInt(lineIteration)
+
+            self.addPlotTrace(
+                data = data[data['Name'] == self.config[tag]['key']],
+                dataKey = tag,
+                lineColor = color,
+                lineDash = dash,
+                row = tagConfig['row'],
+                col = tagConfig['col'],
+                log_y = tagConfig['log_y'],
+                dataType = 2
+            )
+            colorIteration += 1
+        pass
+    
+    def sortKeys_autoExported(self, tags:list[str]):
+        try:
+            self.autoExportData.tagsReduced = tags
+            pprint(self.autoExportData.tagsReduced)
+            for key in tags:
+                tagName = key.rsplit(':')[2]
+                if 'Gauge' in key:
+                    self.pressuresList.append(tagName)
+                    row = 1
+                    col = 1
+                    log_y = True
+                else:
+                    self.processTrends.append(tagName)
+                    row = 2
+                    col = 1
+                    log_y = False
+                self.config.update(
+                    {
+                        tagName:{
+                            'key':key,
+                            'row':row,
+                            'col':col,
+                            'log_y':log_y
+                        }
+                    }
+                )
+            pprint(self.config)
+            
+        except Exception as e:
+            print(e)
