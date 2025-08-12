@@ -79,8 +79,8 @@ class Plotter():
                 [{"secondary_y":False}]
             ],
             subplot_titles=(
-                'Process Trends',
-                'System Pressures'
+                'System Pressures',
+                'Process Trends'
             ),
             shared_xaxes=True
         )
