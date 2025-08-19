@@ -230,9 +230,11 @@ class Plotter():
     def sortKeys_autoExported(self, tags:list[str]):
         try:
             self.autoExportData.tagsReduced = tags
+            print('---\nTags Reduced\n')
             pprint(self.autoExportData.tagsReduced)
+            print('---')
             for key in tags:
-                tagName = key.rsplit(':')[2]
+                tagName = key.rsplit(':')[-1]
                 if 'Gauge' in key:
                     self.pressuresList.append(tagName)
                     row = 1
@@ -253,7 +255,9 @@ class Plotter():
                         }
                     }
                 )
+            print('---\nConfig\n')
             pprint(self.config)
+            print('---')
             
         except Exception as e:
             print(e)
