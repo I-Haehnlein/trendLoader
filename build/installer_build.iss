@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "GP Plasma Trend Plotter"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "GP Plasma"
 #define MyAppPubURL "gpplasma.com"
 #define MyAppIcon "GP_Plasma_StackedOrg.ico"
@@ -35,6 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 ; Source: "{#ProjectPath}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectPath}\dist\trendLoader\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "{#ProjectPath}\{#MyAppIcon}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Tasks]
 ; Name: "startOnBoot"; Description: "Set application to run on Windows boot"; GroupDescription: "{cm:AdditionalIcons}"

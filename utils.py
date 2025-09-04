@@ -65,7 +65,8 @@ class Plotter():
 
     autoExportData:AutoExportData = AutoExportData()
 
-    def __init__(self,runName:str, withHoverUnified:bool = True) -> None:
+    def __init__(self,runName:str, withHoverUnified:bool = True, timezone:str = 'UTC') -> None:
+        self.timezone = timezone
         h_space = 0.05
         v_space = 0.05
         widths = []
@@ -202,7 +203,8 @@ class Plotter():
         print(data)
         self.sortKeys_autoExported(data['Name'].drop_duplicates().values.tolist())
         # data = convertTimestamp(data)
-        data['Timestamp'] = to_datetime(data['Timestamp'], unit='ms')
+        data.Timestamp = to_datetime(data.Timestamp, unit='ms', utc=True)
+        data.Timestamp = data.Timestamp.dt.tz_convert(self.timezone)
         print(data)
         colorIteration = 0
         lineIteration = 0
@@ -230,10 +232,12 @@ class Plotter():
     def sortKeys_autoExported(self, tags:list[str]):
         try:
             self.autoExportData.tagsReduced = tags
+            print('---\nTags Reduced\n')
             pprint(self.autoExportData.tagsReduced)
+            print('---')
             for key in tags:
-                tagName = key.rsplit(':')[2]
-                if 'Gauge' in key:
+                tagName = key.rsplit(':')[-1]
+                if 'Gauge' in key or 'Pressure' in key:
                     self.pressuresList.append(tagName)
                     row = 1
                     col = 1
@@ -253,7 +257,9 @@ class Plotter():
                         }
                     }
                 )
+            print('---\nConfig\n')
             pprint(self.config)
+            print('---')
             
         except Exception as e:
             print(e)
