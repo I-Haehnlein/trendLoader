@@ -1,8 +1,10 @@
-from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox
-from tkinter import LEFT, IntVar, Text, BOTH, BooleanVar
+from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox, CTkComboBox
+from tkinter import LEFT, IntVar, Text, BOTH, BooleanVar, StringVar
 from utils import FileSelection, Plotter
 from os.path import basename, dirname, exists
 from pandas import read_csv
+from pytz import common_timezones
+from tzlocal import get_localzone_name
 
 class App():
     app = CTk()
@@ -10,6 +12,8 @@ class App():
     runName = ''
     unifiedHover:BooleanVar = BooleanVar(app,True,"unifiedHoverState")
     dataType:IntVar = IntVar(app,value = 2)
+    localTz:str = get_localzone_name()
+    timezone:StringVar = StringVar(app,value=localTz)
 
     frameSelectedFile = CTkFrame(app)
     frameSelectedDir = CTkFrame(app)
@@ -38,6 +42,7 @@ class App():
             text = 'Select Trend File',
             command = self.open_file
         )
+        self.ddTimezone = CTkComboBox(self.app, values=common_timezones, variable=self.timezone)
         self.btnPlotFile = CTkButton(self.app, text='PlotData', state='disabled', command = self.plot_selected_file)
         self.btnSaveInteractive = CTkButton(self.frameSave, text = 'Save Interactive', state = 'disabled', command = self.saveInteractive)
         self.btnSavePng = CTkButton(self.frameSave, text = 'Save PNG', state = 'disabled', command = self.savePng)
@@ -49,6 +54,7 @@ class App():
         padY = 5
         anchor = 'center'
 
+        self.ddTimezone.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
         self.frameDataType.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
         self.open_button.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
         self.frameSelectedDir.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX, pady=padY)
@@ -82,7 +88,7 @@ class App():
         pass
 
     def plot_selected_file(self):
-        self.plotter = Plotter(basename(self.fSelect.filename.rstrip('.csv')),self.unifiedHover.get())
+        self.plotter = Plotter(basename(self.fSelect.filename.rstrip('.csv')),self.unifiedHover.get(),self.timezone.get())
         sysData = read_csv(self.fSelect.filename, delimiter=';')
         print(self.dataType)
         match self.dataType.get():
