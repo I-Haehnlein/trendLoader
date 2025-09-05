@@ -5,7 +5,9 @@ from plotly.graph_objects import Figure, Scatter, Table
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.io as pio
-from pandas import DataFrame, Timestamp, to_datetime
+from pandas import DataFrame, Timestamp, to_datetime, read_csv, concat
+import csv
+
 
 class FileSelection():
     filename:str = ''
@@ -36,6 +38,10 @@ class FileSelection():
         filename = filedialog.asksaveasfilename(defaultextension=fType, filetypes=filetypes, initialfile=defaultFile)
         self.filename = filename
         return filename
+    
+class Substring(str):
+    def __eq__(self, other) -> bool:
+        return self.__contains__(other)
 
 def lineTypeByInt(i:int) -> str:
     match i:
@@ -65,36 +71,58 @@ class Plotter():
 
     autoExportData:AutoExportData = AutoExportData()
 
-    def __init__(self,runName:str, withHoverUnified:bool = True, timezone:str = 'UTC') -> None:
+    def __init__(self,runName:str, withHoverUnified:bool = True, timezone:str = 'UTC',numPlots:int=2) -> None:
         self.timezone = timezone
         h_space = 0.05
         v_space = 0.05
         widths = []
-        self.fig = make_subplots(
-            rows=2,
-            cols=1,
-            vertical_spacing=v_space,
-            horizontal_spacing=h_space,
-            specs= [
-                [{"secondary_y":False}],
-                [{"secondary_y":False}]
-            ],
-            subplot_titles=(
-                'System Pressures',
-                'Process Trends'
-            ),
-            shared_xaxes=True
-        )
-        self.fig.update_yaxes(row=1,col=1, type='log', tickformat='0.0e', title_text='Pressure [mTorr]', minor=dict(showgrid=True), tickmode='array', tickvals=[1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,1e1,1e2])
-        self.fig.update_xaxes(row=1,col=1, nticks = 20)
-        self.fig.update_yaxes(row=2,col=1, type='linear', title_text='Trends')
-        self.fig.update_xaxes(
-            row=2,
-            col=1,
-            title_text='Time Stamp',
-            tickangle = 360-45,
-            nticks = 20
-        )
+        match numPlots:
+            case 1:
+                self.fig = make_subplots(
+                    rows=1,
+                    cols=1,
+                    vertical_spacing=v_space,
+                    horizontal_spacing=h_space,
+                    specs= [
+                        [{"secondary_y":False}]
+                    ],
+                    shared_xaxes=True
+                )
+                self.fig.update_yaxes(row=1,col=1, type='linear', title_text='Trends')
+                self.fig.update_xaxes(
+                    row=1,
+                    col=1,
+                    title_text='Time Stamp',
+                    tickangle = 360-45,
+                    nticks = 20
+                )
+            case 2, _:
+                self.fig = make_subplots(
+                    rows=2,
+                    cols=1,
+                    vertical_spacing=v_space,
+                    horizontal_spacing=h_space,
+                    specs= [
+                        [{"secondary_y":False}],
+                        [{"secondary_y":False}]
+                    ],
+                    subplot_titles=(
+                        'System Pressures',
+                        'Process Trends'
+                    ),
+                    shared_xaxes=True
+                )
+                self.fig.update_yaxes(row=1,col=1, type='log', tickformat='0.0e', title_text='Pressure [mTorr]', minor=dict(showgrid=True), tickmode='array', tickvals=[1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,1e1,1e2])
+                self.fig.update_xaxes(row=1,col=1, nticks = 20)
+                self.fig.update_yaxes(row=2,col=1, type='linear', title_text='Trends')
+                self.fig.update_xaxes(
+                    row=2,
+                    col=1,
+                    title_text='Time Stamp',
+                    tickangle = 360-45,
+                    nticks = 20
+                )
+
         if withHoverUnified:
             hovermode = "x unified"
         else:
@@ -124,7 +152,10 @@ class Plotter():
             case 2:
                 x = data['Timestamp']
                 y = data['Value']
-            case _: raise(Exception('Invalid dataType input (1 or 2)'))
+            case 3:
+                x = data.index
+                y = data[dataKey]
+            case _: raise(Exception('Invalid dataType input (1, 2, or 3)'))
 
         self.fig.add_trace(
             Scatter(
@@ -142,6 +173,14 @@ class Plotter():
             secondary_y = secondary_y
         )
         pass
+
+    def plotEmperion(self, data:DataFrame, config:dict):
+        df = data.set_index('Timestamp')
+        colorList = ['red','blue','purple','green']
+        c = 0
+        for key in df.columns.to_list():
+            self.addPlotTrace(df,key,colorList[c%len(colorList)],dataType=3,log_y=False)
+            c += 1
 
     def plotData_siemensTrendExport(self, data:DataFrame):
         dataKeys = self.sortKeys_siemensTrendExport(data.columns.to_list())
@@ -260,6 +299,125 @@ class Plotter():
             print('---\nConfig\n')
             pprint(self.config)
             print('---')
-            
         except Exception as e:
             print(e)
+
+class EmperionCsvConverter():
+    filepath:str
+    preambleData:list = []
+    layerData:list = []
+    trendData:DataFrame
+    tabularTrendData:DataFrame
+    dataDict:dict = {}
+    tags:list = []
+
+
+    def __init__(self, filepath:str, gui) -> None:
+        self.filepath = filepath
+        self.getData()
+        self.convertTrend()
+        self.gui = gui
+        pass
+
+    def getData(self):
+        with open(self.filepath,'r') as file:
+            self.csvReader = csv.reader(file)
+            i=0
+            for row in self.csvReader:
+                if i <= 4:
+                    self.preambleData.append(row)
+                elif i > 4 and i <=5:
+                    self.layerData.append(row)
+                else:
+                    break
+                print(row)
+                i+=1
+        print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
+        print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
+        self.collectTrendData(self.filepath)
+        print(self.trendData)
+
+    def collectTrendData(self, filepath:str):
+        self.trendData = read_csv(filepath, header=5)
+        self.tags = self.trendData['Name'].drop_duplicates().values.tolist()
+        self.sortKeys(self.tags)
+
+    def convertTrend(self):
+        tmpDf = DataFrame()
+        init = True
+        pprint(self.dataDict)
+        for key in sorted(self.dataDict):
+            print(f'Adding {key} to tabular data')
+            if init:
+                tmpDf['Timestamp']=self.dataDict[key]['data']['Timestamp'].values
+            tmpDf[key] = self.dataDict[key]['data']['Value'].values
+        self.tabularTrendData = tmpDf
+
+    def saveCsv(self, saveFilepath) -> bool:
+        try:
+            csvData = ''
+            # Add preamble
+            for row in self.preambleData:
+                csvData += ','.join(row) + '\n'
+            csvData += '\n'
+            
+            # Add layer data
+            for row in self.layerData:
+                csvData += ','.join(row) + '\n'
+            csvData += '\n'
+            
+            # Add trend data
+            csvData += self.tabularTrendData.to_csv(
+                    index=False,
+                    lineterminator='\n'
+                )
+
+            # Write csvData string to file
+            with open(saveFilepath,'w') as file:
+                file.write(csvData)
+            return True
+        
+        except Exception as e:
+            print(e)
+            return False
+
+    def sortKeys(self, tags:list[str]):
+        try:
+            print('---\nTags Reduced\n')
+            pprint(tags)
+            print('---')
+            for key in tags:
+                # Get Simplified name from tag string
+                tagName = key.rsplit(':')[-1]
+                
+                # Check assign plotting information to tags based on tag name
+                # Looks for subtsrtings in the full tag exported
+                match Substring(key):
+                    case 'Gauge' | 'Pressure':
+                        row = 1
+                        col = 1
+                        log_y = True
+                    case _:
+                        row = 2
+                        col = 1
+                        log_y = False
+
+                # Add plotting information and a pandas DataFrame of the data
+                # to dict for later recompiling in full tabular format
+                self.dataDict.update(
+                    {
+                        tagName:{
+                            'key':key,
+                            'row':row,
+                            'col':col,
+                            'log_y':log_y,
+                            'data':self.trendData[self.trendData['Name'] == key][['Timestamp','Value']]
+                        }
+                    }
+                )
+            print('---\nConfig\n')
+            pprint(self.dataDict)
+            print('---')
+        except Exception as e:
+            print(e)
+        pass
