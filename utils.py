@@ -1,6 +1,7 @@
 from pprint import pprint
 from customtkinter import CTkTextbox
-from tkinter import filedialog
+from customtkinter import filedialog
+import customtkinter
 from plotly.graph_objects import Figure, Scatter, Table
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -8,6 +9,8 @@ import plotly.io as pio
 from pandas import DataFrame, Timestamp, to_datetime, read_csv, concat
 import csv
 
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("green")
 
 class FileSelection():
     filename:str = ''

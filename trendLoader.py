@@ -1,10 +1,15 @@
+#!venv/bin/python3
 from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox, CTkComboBox
-from tkinter import LEFT, IntVar, Text, BOTH, BooleanVar, StringVar
+import customtkinter
+from tkinter import LEFT, IntVar, PhotoImage, Text, BOTH, BooleanVar, StringVar
 from utils import FileSelection, Plotter, EmperionCsvConverter
 from os.path import basename, dirname, exists
 from pandas import read_csv
 from pytz import common_timezones
 from tzlocal import get_localzone_name
+
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("green")
 
 class App():
     app = CTk()
@@ -28,9 +33,9 @@ class App():
         try:
             icon = 'GP_Plasma_StackedOrg.ico'
             if exists(icon):
-                self.app.iconbitmap('GP_Plasma_StackedOrg.ico')
+                self.app.iconbitmap(icon)
             else:
-                self.app.iconbitmap('_internal\\'+icon)
+                self.app.iconbitmap('_internal/'+icon)
         except Exception as e:
             print(e)
         self.app.title('Siemens Trend Export Plotter')
