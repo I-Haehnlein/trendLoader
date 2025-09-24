@@ -14,8 +14,9 @@ customtkinter.set_default_color_theme("green")
 
 class FileSelection():
     filename:str = ''
+    fileDir:str|None = None
 
-    def select_file(self,fType:str='.csv',defaultFile=''):
+    def select_file(self,fType:str='.csv',defaultFile='') -> str:
         match fType:
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
@@ -31,7 +32,7 @@ class FileSelection():
         self.filename = filename
         return filename
     
-    def select_save(self,fType:str='.html',defaultFile=''):
+    def select_save(self,fType:str='.html',defaultFile='') -> str:
         match fType:
             case '.csv': filetypes = [('Comma Separated Values', '*.csv')]
             case '.html': filetypes = [('Interactive Plot', '*.html')]
@@ -41,6 +42,11 @@ class FileSelection():
         filename = filedialog.asksaveasfilename(defaultextension=fType, filetypes=filetypes, initialfile=defaultFile)
         self.filename = filename
         return filename
+    
+    def select_dir(self) -> str:
+        dirPath = filedialog.askdirectory(mustexist=True, title="Please selecet directory with exported data files")
+        self.fileDir = dirPath
+        return dirPath
     
 class Substring(str):
     def __eq__(self, other) -> bool:
@@ -322,26 +328,48 @@ class EmperionCsvConverter():
         self.gui = gui
         pass
 
-    def getData(self):
+    def collectMetaData(self):
+        self.layerData = []
+        self.preambleData = []
         with open(self.filepath,'r') as file:
-            self.csvReader = csv.reader(file)
+            csvReader = csv.reader(file)
             i=0
-            for row in self.csvReader:
-                if i <= 4:
-                    self.preambleData.append(row)
-                elif i > 4 and i <=5:
-                    self.layerData.append(row)
-                else:
-                    break
+            section = 0
+            for row in csvReader:
+                match section:
+                    case 0:
+                        if len(row) > 0:
+                            if 'LAYER DATA' in row[0]:
+                                self.layerData.append(row)
+                                section = 1
+                            else:
+                                self.preambleData.append(row)
+                        else:
+                            self.preambleData.append(row)
+                    case 1:
+                        if len(row) >0 :
+                            if 'TREND DATA' in row[0]:
+                                headerIndex = i-2
+                                print(f'--\nHeader Index: {headerIndex}\n--')
+                                return headerIndex # Returns the index in file where the headers of the trend data exists
+                            self.layerData.append(row)
+                        else:
+                            self.layerData.append(row)
+                    case _:
+                        return i
                 print(row)
                 i+=1
+
+    def getData(self):
+        trendHeaderIndex = self.collectMetaData()
         print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
         print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
-        self.collectTrendData(self.filepath)
+        self.collectTrendData(self.filepath,trendHeaderIndex)
         print(self.trendData)
 
-    def collectTrendData(self, filepath:str):
-        self.trendData = read_csv(filepath, header=5)
+    def collectTrendData(self, filepath:str,headerIndex:int):
+        self.trendData = read_csv(filepath, header=headerIndex)
+        print(list(self.trendData.columns))
         self.tags = self.trendData['Name'].drop_duplicates().values.tolist()
         self.sortKeys(self.tags)
 
@@ -362,14 +390,15 @@ class EmperionCsvConverter():
             # Add preamble
             for row in self.preambleData:
                 csvData += ','.join(row) + '\n'
-            csvData += '\n'
+            # csvData += '\n'
             
             # Add layer data
             for row in self.layerData:
                 csvData += ','.join(row) + '\n'
-            csvData += '\n'
+            # csvData += '\n'
             
             # Add trend data
+            csvData += 'TREND DATA\n'
             csvData += self.tabularTrendData.to_csv(
                     index=False,
                     lineterminator='\n'
