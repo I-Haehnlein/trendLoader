@@ -1,5 +1,6 @@
 __pycache__/
 venv/
 build/trendLoader/
+build/empCsvConverter
 dist/
 testData/

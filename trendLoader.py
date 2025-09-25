@@ -1,10 +1,15 @@
+#!venv/bin/python3
 from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox, CTkComboBox
-from tkinter import LEFT, IntVar, Text, BOTH, BooleanVar, StringVar
-from utils import FileSelection, Plotter
+import customtkinter
+from tkinter import LEFT, IntVar, PhotoImage, Text, BOTH, BooleanVar, StringVar
+from utils import FileSelection, Plotter, EmperionCsvConverter
 from os.path import basename, dirname, exists
 from pandas import read_csv
 from pytz import common_timezones
 from tzlocal import get_localzone_name
+
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("green")
 
 class App():
     app = CTk()
@@ -28,9 +33,9 @@ class App():
         try:
             icon = 'GP_Plasma_StackedOrg.ico'
             if exists(icon):
-                self.app.iconbitmap('GP_Plasma_StackedOrg.ico')
+                self.app.iconbitmap(icon)
             else:
-                self.app.iconbitmap('_internal\\'+icon)
+                self.app.iconbitmap('_internal/'+icon)
         except Exception as e:
             print(e)
         self.app.title('Siemens Trend Export Plotter')
@@ -49,7 +54,7 @@ class App():
         self.cbSelectHoverMode = CTkCheckBox(self.app, text = "Unified Marker Display", variable=self.unifiedHover)
         self.rbtnSiemensExport = CTkRadioButton(self.frameDataType, text="Siemens Trend Export", variable=self.dataType, value=1)
         self.rbtnAutoExport = CTkRadioButton(self.frameDataType, text="Auto Export", variable=self.dataType, value=2)
-
+        self.btnConvertCsv = CTkButton(self.app, text='Convert Log File', command = self.convertFile)
         padX = 5
         padY = 5
         anchor = 'center'
@@ -64,6 +69,7 @@ class App():
         self.tbSelectedFile.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
         self.tbSelectedDir.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
 
+        self.btnConvertCsv.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
         self.rbtnAutoExport.pack(side=LEFT)
         self.rbtnSiemensExport.pack(side=LEFT)
         self.cbSelectHoverMode.pack(anchor=anchor)
@@ -115,6 +121,17 @@ class App():
         saveFile.select_save(fType='.png',defaultFile=self.runName)
         self.plotter.fig.write_image(file=saveFile.filename, format='png',width=1600, height=900)
         pass
+
+    def convertFile(self):
+        converter = EmperionCsvConverter(self.fSelect.filename,self)
+        saveFile = self.selectSaveConvertedCsv()
+        print(converter.saveCsv(saveFile))
+
+
+    def selectSaveConvertedCsv(self):
+        saveFile = FileSelection()
+        saveFile.select_save(fType='.csv',defaultFile=self.runName)
+        return saveFile.filename
 
 plotter = App()
 plotter.app.mainloop()
