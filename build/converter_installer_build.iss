@@ -23,7 +23,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ; PrivilegesRequired=lowest
 OutputDir={#ProjectPath}\dist
-OutputBaseFilename=siemensTrendPlotter_{#MyAppVersion}_installer
+OutputBaseFilename=emperionCsvConverter_{#MyAppVersion}_installer
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -44,9 +44,9 @@ Source: "{#ProjectPath}\{#MyAppIcon}"; DestDir: "{app}"; Flags: ignoreversion
 ; Following line adds uninstall to start menu
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"; IconFilename: "{app}\{#MyAppIcon}"
 ; Following line adds application to start menu to be serachable
-Name: "{commonstartmenu}\{#MyAppName}"; Filename: "{app}\trendLoader.exe"; WorkingDir: "{app}"; IconFilename: "{app}\{#MyAppIcon}"
+Name: "{commonstartmenu}\{#MyAppName}"; Filename: "{app}\empCsvConverter.exe"; WorkingDir: "{app}"; IconFilename: "{app}\{#MyAppIcon}"
 ; Uncomment following line to auto launch the application when the PC is booted
-; Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\trendLoader.exe"; WorkingDir: "{app}"; Tasks: startOnBoot
+; Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\empCsvConverter.exe"; WorkingDir: "{app}"; Tasks: startOnBoot
 
 [UninstallDelete]
 Type: files; Name: "{app}\*"
