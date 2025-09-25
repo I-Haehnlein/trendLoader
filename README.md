@@ -37,3 +37,16 @@ These plots are built using the backend of Plotly in python. Please see plotly d
     - You can hide or unhide a trendline by clicking on it's name in the legend. This allows you to tailor you view to isolate the issue at hand.
     - If you need to isolate a trend line, double-click on the trend name in the legend. This will hide all lines except the selected one.
         - From here you can single-click on any trend line to enable it from there.
+
+
+# Bulk CSV Converter for Emperion Data Export formats
+## Scope
+This secondary program is used to select a directory of files exported from an emperion system. The goal is to convert the database like structure of the trend data into tabular format.
+
+## Usage
+- Use the "Select File Directory" to navigate to the directory housing the exported files. 
+    - A list of the csv files in the directory will appear.
+- Select if you would like to only do new or all files
+    - This will look for a subdirectory called converted which will have all the converted files.
+- Select the "Convert Files in Directory" button to bulk convert all files.
+- The output files can be found in the subdirectory "converted" within the original file location.
