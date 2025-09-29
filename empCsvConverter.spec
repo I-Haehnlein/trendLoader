@@ -5,7 +5,7 @@ a = Analysis(
     ['empCsvConverter.py'],
     pathex=[],
     binaries=[],
-    datas=[('GP_Plasma_StackedOrg.ico', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -32,7 +32,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['GP_Plasma_StackedOrg.ico'],
 )
 coll = COLLECT(
     exe,
