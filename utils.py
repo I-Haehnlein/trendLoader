@@ -349,7 +349,7 @@ class EmperionCsvConverter():
                     case 1:
                         if len(row) >0 :
                             if 'TREND DATA' in row[0]:
-                                headerIndex = i-2
+                                headerIndex = i-1
                                 print(f'--\nHeader Index: {headerIndex}\n--')
                                 return headerIndex # Returns the index in file where the headers of the trend data exists
                             self.layerData.append(row)
@@ -364,6 +364,7 @@ class EmperionCsvConverter():
         trendHeaderIndex = self.collectMetaData()
         print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
         print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
+        print(f'-- Header Index: {trendHeaderIndex}')
         self.collectTrendData(self.filepath,trendHeaderIndex)
         print(self.trendData)
 
