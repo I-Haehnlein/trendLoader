@@ -149,7 +149,7 @@ class Converter():
                 converter.saveCsv(saveFile)
                 message += f'Converted: {basename(file)}\n'
             except Exception as e:
-                message += f'Error converting: {basename(file)}\n'
+                message += f'Error converting: {basename(file)} : {e}\n'
                 print(f'Error Converting Files: {e}')
                 raise e
 

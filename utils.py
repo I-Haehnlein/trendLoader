@@ -6,7 +6,7 @@ from plotly.graph_objects import Figure, Scatter, Table
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.io as pio
-from pandas import DataFrame, Timestamp, to_datetime, read_csv, concat
+from pandas import DataFrame, Timestamp, to_datetime, read_csv, concat, merge_asof, Timedelta
 import csv
 
 customtkinter.set_appearance_mode("dark")
@@ -328,6 +328,14 @@ class EmperionCsvConverter():
         self.gui = gui
         pass
 
+    def getData(self):
+        trendHeaderIndex = self.collectMetaData()
+        print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
+        print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
+        print(f'-- Header Index: {trendHeaderIndex}')
+        self.collectTrendData(self.filepath,trendHeaderIndex)
+        print(self.trendData)
+
     def collectMetaData(self):
         self.layerData = []
         self.preambleData = []
@@ -360,14 +368,6 @@ class EmperionCsvConverter():
                 print(row)
                 i+=1
 
-    def getData(self):
-        trendHeaderIndex = self.collectMetaData()
-        print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
-        print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
-        print(f'-- Header Index: {trendHeaderIndex}')
-        self.collectTrendData(self.filepath,trendHeaderIndex)
-        print(self.trendData)
-
     def collectTrendData(self, filepath:str,headerIndex:int):
         self.trendData = read_csv(filepath, header=headerIndex)
         print(list(self.trendData.columns))
@@ -379,10 +379,16 @@ class EmperionCsvConverter():
         init = True
         pprint(self.dataDict)
         for key in sorted(self.dataDict):
-            print(f'Adding {key} to tabular data')
-            if init:
-                tmpDf['Timestamp']=self.dataDict[key]['data']['Timestamp'].values
-            tmpDf[key] = self.dataDict[key]['data']['Value'].values
+            try:
+                print(f'Adding {key} to tabular data')
+                if init:
+                    tmpDf:DataFrame = self.dataDict[key]['data']
+                    # tmpDf = tmpDf.set_inex('Timestamp')
+                    init = False
+                else:
+                    tmpDf = merge_asof(tmpDf,self.dataDict[key]['data'],on='Timestamp',tolerance=Timedelta('10ms'))
+            except Exception as e:
+                raise Exception(f'Key: {key} | {e}')
         self.tabularTrendData = tmpDf
 
     def saveCsv(self, saveFilepath) -> bool:
@@ -437,6 +443,8 @@ class EmperionCsvConverter():
 
                 # Add plotting information and a pandas DataFrame of the data
                 # to dict for later recompiling in full tabular format
+                tmpDf = self.trendData[self.trendData['Name'] == key][['Timestamp','Value']].rename(columns={'Value':key})
+                tmpDf['Timestamp'] = to_datetime(tmpDf['Timestamp'])
                 self.dataDict.update(
                     {
                         tagName:{
@@ -444,7 +452,7 @@ class EmperionCsvConverter():
                             'row':row,
                             'col':col,
                             'log_y':log_y,
-                            'data':self.trendData[self.trendData['Name'] == key][['Timestamp','Value']]
+                            'data':tmpDf
                         }
                     }
                 )

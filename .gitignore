@@ -4,3 +4,4 @@ build/trendLoader/
 build/empCsvConverter
 dist/
 testData/
+/testPdMerge.py
