@@ -1,8 +1,8 @@
 #!venv/bin/python3
 from pprint import pprint
-from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkLabel, CTkFrame, CTkCheckBox, CTkComboBox
+from customtkinter import CTk, CTkButton, CTkRadioButton, CTkTextbox, CTkFrame, CTkProgressBar, CTkLabel
 import customtkinter
-from tkinter import LEFT, IntVar, PhotoImage, Text, BOTH, BooleanVar, StringVar
+from tkinter import LEFT, DoubleVar, IntVar, PhotoImage, Text, BOTH, BooleanVar, StringVar, Variable
 from utils import FileSelection, Plotter, EmperionCsvConverter
 from os.path import basename, dirname, exists
 import os
@@ -10,7 +10,8 @@ from pandas import read_csv
 from pytz import common_timezones
 from tzlocal import get_localzone_name
 from glob import glob
-from time import time
+from time import sleep, time
+from threading import Thread
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("green")
@@ -36,6 +37,9 @@ class Converter():
     rbtnConvertNew:CTkRadioButton
     convertNew:BooleanVar = BooleanVar(app,True,'convertNew')
     btnConvert:CTkButton
+    progressBar:CTkProgressBar
+    convertThread:Thread
+    progress:DoubleVar = DoubleVar(app,value=0.0)
 
     def __init__(self):
         try:
@@ -48,7 +52,7 @@ class Converter():
             print(e)
         self.app.title('Emperion Runfile Converter')
         self.app.resizable(True,True)
-        self.app.geometry('400x400')
+        self.app.geometry('400x600')
 
         match os.name:
             case 'nt': self.fileSep = '\\'
@@ -63,7 +67,10 @@ class Converter():
         ## Submission
         self.rbtnConvertNew = CTkRadioButton(self.frameConvertType, variable=self.convertNew, value=True, width=200, height=50, text='Convert New')
         self.rbtnConvertAll = CTkRadioButton(self.frameConvertType, variable=self.convertNew, value=False, width=200, height=50, text='Convert All (Override)')
-        self.btnConvert = CTkButton(self.app,command=self.convertFiles, width=200, height=50, text='Convert Files in Directory', state = 'disabled')
+        self.btnConvert = CTkButton(self.app,command=self.startDataConversion, width=200, height=50, text='Convert Files in Directory', state = 'disabled')
+        self.progressBar = CTkProgressBar(self.app,variable=self.progress)
+        self.progressLabel = CTkLabel(self.app,text="0 of 0")
+        # self.progressBar.set(self.progress.get())
         # Pack Items
         padX = 5
         padY = 5
@@ -78,6 +85,8 @@ class Converter():
         self.rbtnConvertAll.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
         self.frameConvertType.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH)
         self.btnConvert.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH)
+        self.progressBar.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH)
+        self.progressLabel.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH)
 
     def makeSaveDir(self):
         try:
@@ -135,28 +144,41 @@ class Converter():
                 self.fileList = tmpFileList
             case False:
                 pass
+    
+    def startDataConversion(self):
+        self.convertThread = Thread(target=self.convertFiles,daemon=True)
+        self.convertThread.start()
+        pass
 
     def convertFiles(self):
+        self.btnConvert.configure(state='disabled')
         message = ''
         self.filterFiles(self.convertNew.get())
         pprint(self.fileList)
         if len(self.fileList) == 0:
             message += 'No new files detected\n'
+        fileIncrement = 0
+        lenFileList = len(self.fileList)
         for file in sorted(self.fileList):
+            fileIncrement += 1
             try:
-                converter = EmperionCsvConverter(filepath=file,gui=self)
+                converter = EmperionCsvConverter(filepath=file,gui=self,bar=self.progressBar)
                 saveFile = self.saveFileDirectory + self.fileSep + basename(file)
                 converter.saveCsv(saveFile)
                 message += f'Converted: {basename(file)}\n'
+                self.progressBar.set(fileIncrement/lenFileList)
+                self.progressLabel.configure(text=f'{fileIncrement} of {lenFileList}')
+                print(fileIncrement/lenFileList)
             except Exception as e:
                 message += f'Error converting: {basename(file)} : {e}\n'
                 print(f'Error Converting Files: {e}')
-                raise e
+                # raise e
 
         self.txtFileList.configure(require_redraw=False,state='normal')
         self.txtFileList.delete('0.0','end')
         self.txtFileList.insert('0.0',message)
         self.txtFileList.configure(require_redraw=False,state='disabled')
+        self.btnConvert.configure(state='normal')
 
 if '__main__' in __name__:
     converter = Converter()

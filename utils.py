@@ -1,4 +1,5 @@
 from pprint import pprint
+from threading import Thread
 from customtkinter import CTkTextbox
 from customtkinter import filedialog
 import customtkinter
@@ -226,7 +227,6 @@ class Plotter():
 
     def sortKeys_siemensTrendExport(self, columns:list[str]):
         allkeys = []
-        pprint(columns)
         for key in columns:
             if 'Time' not in key:
                 tag = key.replace('Y value','').rstrip()
@@ -243,17 +243,13 @@ class Plotter():
                         }
                     }
                 )
-        print(allkeys)
-        pprint(self.config)
         return allkeys
     
     def plotData_autoExported(self, data:DataFrame):
-        print(data)
         self.sortKeys_autoExported(data['Name'].drop_duplicates().values.tolist())
         # data = convertTimestamp(data)
         data.Timestamp = to_datetime(data.Timestamp, unit='ms', utc=True)
         data.Timestamp = data.Timestamp.dt.tz_convert(self.timezone)
-        print(data)
         colorIteration = 0
         lineIteration = 0
         for tag in self.config:
@@ -280,9 +276,6 @@ class Plotter():
     def sortKeys_autoExported(self, tags:list[str]):
         try:
             self.autoExportData.tagsReduced = tags
-            print('---\nTags Reduced\n')
-            pprint(self.autoExportData.tagsReduced)
-            print('---')
             for key in tags:
                 tagName = key.rsplit(':')[-1]
                 if 'Gauge' in key or 'Pressure' in key:
@@ -305,11 +298,11 @@ class Plotter():
                         }
                     }
                 )
-            print('---\nConfig\n')
-            pprint(self.config)
-            print('---')
         except Exception as e:
             print(e)
+
+class ConverterError(Exception):
+    pass
 
 class EmperionCsvConverter():
     filepath:str
@@ -321,20 +314,28 @@ class EmperionCsvConverter():
     tags:list = []
 
 
-    def __init__(self, filepath:str, gui) -> None:
+    def __init__(self, filepath, gui, bar) -> None:
         self.filepath = filepath
         self.getData()
         self.convertTrend()
         self.gui = gui
+        self.progressBar = bar
         pass
 
+    def clearData(self):
+        self.preambleData = []
+        self.layerData = []
+        self.trendData = DataFrame()
+        self.tabularTrendData = DataFrame()
+        self.dataDict = {}
+        self.tags = []
+
     def getData(self):
-        trendHeaderIndex = self.collectMetaData()
-        print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
-        print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
-        print(f'-- Header Index: {trendHeaderIndex}')
-        self.collectTrendData(self.filepath,trendHeaderIndex)
-        print(self.trendData)
+        try:
+            trendHeaderIndex = self.collectMetaData()
+            self.collectTrendData(self.filepath,trendHeaderIndex)
+        except Exception as error:
+            raise ConverterError(error)
 
     def collectMetaData(self):
         self.layerData = []
@@ -358,32 +359,26 @@ class EmperionCsvConverter():
                         if len(row) >0 :
                             if 'TREND DATA' in row[0]:
                                 headerIndex = i-1
-                                print(f'--\nHeader Index: {headerIndex}\n--')
                                 return headerIndex # Returns the index in file where the headers of the trend data exists
                             self.layerData.append(row)
                         else:
                             self.layerData.append(row)
                     case _:
                         return i
-                print(row)
                 i+=1
 
     def collectTrendData(self, filepath:str,headerIndex:int):
         self.trendData = read_csv(filepath, header=headerIndex)
-        print(list(self.trendData.columns))
         self.tags = self.trendData['Name'].drop_duplicates().values.tolist()
         self.sortKeys(self.tags)
 
     def convertTrend(self):
         tmpDf = DataFrame()
         init = True
-        pprint(self.dataDict)
         for key in sorted(self.dataDict):
             try:
-                print(f'Adding {key} to tabular data')
                 if init:
                     tmpDf:DataFrame = self.dataDict[key]['data']
-                    # tmpDf = tmpDf.set_inex('Timestamp')
                     init = False
                 else:
                     tmpDf = merge_asof(tmpDf,self.dataDict[key]['data'],on='Timestamp',tolerance=Timedelta('10ms'))
@@ -397,12 +392,10 @@ class EmperionCsvConverter():
             # Add preamble
             for row in self.preambleData:
                 csvData += ','.join(row) + '\n'
-            # csvData += '\n'
             
             # Add layer data
             for row in self.layerData:
                 csvData += ','.join(row) + '\n'
-            # csvData += '\n'
             
             # Add trend data
             csvData += 'TREND DATA\n'
@@ -422,9 +415,6 @@ class EmperionCsvConverter():
 
     def sortKeys(self, tags:list[str]):
         try:
-            print('---\nTags Reduced\n')
-            pprint(tags)
-            print('---')
             for key in tags:
                 # Get Simplified name from tag string
                 tagName = key.rsplit(':')[-1]
@@ -456,9 +446,6 @@ class EmperionCsvConverter():
                         }
                     }
                 )
-            print('---\nConfig\n')
-            pprint(self.dataDict)
-            print('---')
         except Exception as e:
             print(e)
         pass
