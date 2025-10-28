@@ -151,7 +151,7 @@ class Converter():
         pass
 
     def convertFiles(self):
-        self.btnConvert.configure(state='disabled')
+        self.btnConvert.configure(state='disabled',text='Converting Files')
         message = ''
         self.filterFiles(self.convertNew.get())
         pprint(self.fileList)
@@ -178,7 +178,7 @@ class Converter():
         self.txtFileList.delete('0.0','end')
         self.txtFileList.insert('0.0',message)
         self.txtFileList.configure(require_redraw=False,state='disabled')
-        self.btnConvert.configure(state='normal')
+        self.btnConvert.configure(state='normal', text='Convert Files in Directory')
 
 if '__main__' in __name__:
     converter = Converter()
