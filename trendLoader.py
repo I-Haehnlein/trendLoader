@@ -123,7 +123,7 @@ class App():
         pass
 
     def convertFile(self):
-        converter = EmperionCsvConverter(self.fSelect.filename,self)
+        converter = EmperionCsvConverter(self.fSelect.filename,self,None)
         saveFile = self.selectSaveConvertedCsv()
         print(converter.saveCsv(saveFile))
 

@@ -333,7 +333,7 @@ class EmperionCsvConverter():
     def getData(self):
         try:
             trendHeaderIndex = self.collectMetaData()
-            self.collectTrendData(self.filepath,trendHeaderIndex)
+            self.collectTrendData(self.filepath,trendHeaderIndex) # type: ignore
         except Exception as error:
             raise ConverterError(error)
 
