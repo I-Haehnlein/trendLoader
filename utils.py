@@ -230,7 +230,7 @@ class Plotter():
         for key in columns:
             if 'Time' not in key:
                 tag = key.replace('Y value','').rstrip()
-                if 'Gauge' in key:
+                if 'Gauge' in key or 'Pressure' in key:
                     self.pressuresList.append(tag)
                 else:
                     self.processTrends.append(tag)
