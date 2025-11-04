@@ -80,58 +80,36 @@ class Plotter():
 
     autoExportData:AutoExportData = AutoExportData()
 
-    def __init__(self,runName:str, withHoverUnified:bool = True, timezone:str = 'UTC',numPlots:int=2) -> None:
+    def __init__(self,runName:str, withHoverUnified:bool = True, timezone:str = 'UTC') -> None:
         self.timezone = timezone
         h_space = 0.05
         v_space = 0.05
         widths = []
-        match numPlots:
-            case 1:
-                self.fig = make_subplots(
-                    rows=1,
-                    cols=1,
-                    vertical_spacing=v_space,
-                    horizontal_spacing=h_space,
-                    specs= [
-                        [{"secondary_y":False}]
-                    ],
-                    shared_xaxes=True
-                )
-                self.fig.update_yaxes(row=1,col=1, type='linear', title_text='Trends')
-                self.fig.update_xaxes(
-                    row=1,
-                    col=1,
-                    title_text='Time Stamp',
-                    tickangle = 360-45,
-                    nticks = 20
-                )
-            case 2, _:
-                self.fig = make_subplots(
-                    rows=2,
-                    cols=1,
-                    vertical_spacing=v_space,
-                    horizontal_spacing=h_space,
-                    specs= [
-                        [{"secondary_y":False}],
-                        [{"secondary_y":False}]
-                    ],
-                    subplot_titles=(
-                        'System Pressures',
-                        'Process Trends'
-                    ),
-                    shared_xaxes=True
-                )
-                self.fig.update_yaxes(row=1,col=1, type='log', tickformat='0.0e', title_text='Pressure [mTorr]', minor=dict(showgrid=True), tickmode='array', tickvals=[1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,1e1,1e2])
-                self.fig.update_xaxes(row=1,col=1, nticks = 20)
-                self.fig.update_yaxes(row=2,col=1, type='linear', title_text='Trends')
-                self.fig.update_xaxes(
-                    row=2,
-                    col=1,
-                    title_text='Time Stamp',
-                    tickangle = 360-45,
-                    nticks = 20
-                )
-
+        self.fig = make_subplots(
+            rows=2,
+            cols=1,
+            vertical_spacing=v_space,
+            horizontal_spacing=h_space,
+            specs= [
+                [{"secondary_y":False}],
+                [{"secondary_y":False}]
+            ],
+            subplot_titles=(
+                'System Pressures',
+                'Process Trends'
+            ),
+            shared_xaxes=True
+        )
+        self.fig.update_yaxes(row=1,col=1, type='log', tickformat='0.0e', title_text='Pressure [mTorr]', minor=dict(showgrid=True), tickmode='array', tickvals=[1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,1e1,1e2])
+        self.fig.update_xaxes(row=1,col=1, nticks = 20)
+        self.fig.update_yaxes(row=2,col=1, type='linear', title_text='Trends')
+        self.fig.update_xaxes(
+            row=2,
+            col=1,
+            title_text='Time Stamp',
+            tickangle = 360-45,
+            nticks = 20
+        )
         if withHoverUnified:
             hovermode = "x unified"
         else:
@@ -161,10 +139,7 @@ class Plotter():
             case 2:
                 x = data['Timestamp']
                 y = data['Value']
-            case 3:
-                x = data.index
-                y = data[dataKey]
-            case _: raise(Exception('Invalid dataType input (1, 2, or 3)'))
+            case _: raise(Exception('Invalid dataType input (1 or 2)'))
 
         self.fig.add_trace(
             Scatter(
@@ -182,14 +157,6 @@ class Plotter():
             secondary_y = secondary_y
         )
         pass
-
-    def plotEmperion(self, data:DataFrame, config:dict):
-        df = data.set_index('Timestamp')
-        colorList = ['red','blue','purple','green']
-        c = 0
-        for key in df.columns.to_list():
-            self.addPlotTrace(df,key,colorList[c%len(colorList)],dataType=3,log_y=False)
-            c += 1
 
     def plotData_siemensTrendExport(self, data:DataFrame):
         dataKeys = self.sortKeys_siemensTrendExport(data.columns.to_list())
@@ -308,6 +275,7 @@ class Plotter():
             print('---\nConfig\n')
             pprint(self.config)
             print('---')
+            
         except Exception as e:
             print(e)
 
@@ -364,7 +332,7 @@ class EmperionCsvConverter():
         trendHeaderIndex = self.collectMetaData()
         print('\n'.join(list(map(lambda row: ','.join(row),self.preambleData))),'\n')
         print('\n'.join(list(map(lambda row: ','.join(row),self.layerData))),'\n')
-        self.collectTrendData(self.filepath,trendHeaderIndex)
+        self.collectTrendData(self.filepath,trendHeaderIndex) # type: ignore
         print(self.trendData)
 
     def collectTrendData(self, filepath:str,headerIndex:int):

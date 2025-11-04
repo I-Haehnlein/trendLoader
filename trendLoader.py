@@ -69,7 +69,7 @@ class App():
         self.tbSelectedFile.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
         self.tbSelectedDir.pack(padx=padX, pady=padY, anchor=anchor, expand=True, fill=BOTH, side=LEFT)
 
-        self.btnConvertCsv.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
+        # self.btnConvertCsv.pack(anchor=anchor, expand=True, fill=BOTH, padx=padX*2, pady=padY)
         self.rbtnAutoExport.pack(side=LEFT)
         self.rbtnSiemensExport.pack(side=LEFT)
         self.cbSelectHoverMode.pack(anchor=anchor)
