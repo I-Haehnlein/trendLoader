@@ -92,7 +92,7 @@ class Plotter():
             horizontal_spacing=h_space,
             specs= [
                 [{"secondary_y":False}],
-                [{"secondary_y":False}]
+                [{"secondary_y":True}]
             ],
             subplot_titles=(
                 'System Pressures',
@@ -103,6 +103,7 @@ class Plotter():
         self.fig.update_yaxes(row=1,col=1, type='log', tickformat='0.0e', title_text='Pressure [mTorr]', minor=dict(showgrid=True), tickmode='array', tickvals=[1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1,1e1,1e2])
         self.fig.update_xaxes(row=1,col=1, nticks = 20)
         self.fig.update_yaxes(row=2,col=1, type='linear', title_text='Trends')
+        self.fig.update_yaxes(row=2,col=1,type='linear',secondary_y=True, title_text='Currents [A]')
         self.fig.update_xaxes(
             row=2,
             col=1,
@@ -163,10 +164,18 @@ class Plotter():
         colorIteration = 0
         lineIteration = 0
         for tag in self.config:
+            print(tag)
+            y2 = False
             if tag in self.pressuresList:
                 rowSet = 1
                 colSet = 1
                 log_y = True
+            elif 'Current' in tag:
+                print(tag)
+                rowSet = 2
+                colSet = 1
+                log_y  = False
+                y2 = True
             elif tag in self.processTrends:
                 rowSet = 2
                 colSet = 1
@@ -187,13 +196,14 @@ class Plotter():
                 lineDash = dash,
                 row = rowSet,
                 col = colSet,
-                log_y=log_y
+                log_y=log_y,
+                secondary_y=y2
             )
             colorIteration += 1
 
     def sortKeys_siemensTrendExport(self, columns:list[str]):
         allkeys = []
-        pprint(columns)
+        # pprint(columns)
         for key in columns:
             if 'Time' not in key:
                 tag = key.replace('Y value','').rstrip()
@@ -210,8 +220,8 @@ class Plotter():
                         }
                     }
                 )
-        print(allkeys)
-        pprint(self.config)
+        # print(allkeys)
+        # pprint(self.config)
         return allkeys
     
     def plotData_autoExported(self, data:DataFrame):
